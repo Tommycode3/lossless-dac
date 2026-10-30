@@ -1,0 +1,9 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "Tommycode3_lossless-dac_components_LT3045") (type "KiCad") (uri "${KIPRJMOD}/../components/LT3045") (options "") (descr ""))
+  (lib (name "Tommycode3_lossless-dac_components_LT3094") (type "KiCad") (uri "${KIPRJMOD}/../components/LT3094") (options "") (descr ""))
+  (lib (name "Tommycode3_lossless-dac_components_OPA1622") (type "KiCad") (uri "${KIPRJMOD}/../components/OPA1622") (options "") (descr ""))
+  (lib (name "stdlib_kicad-footprints_Capacitor_SMD") (type "KiCad") (uri "${KIPRJMOD}/../.pcb/stdlib/kicad-footprints/Capacitor_SMD.pretty") (options "") (descr ""))
+  (lib (name "stdlib_kicad-footprints_Connector_PinHeader_2.54mm") (type "KiCad") (uri "${KIPRJMOD}/../.pcb/stdlib/kicad-footprints/Connector_PinHeader_2.54mm.pretty") (options "") (descr ""))
+  (lib (name "stdlib_kicad-footprints_Resistor_SMD") (type "KiCad") (uri "${KIPRJMOD}/../.pcb/stdlib/kicad-footprints/Resistor_SMD.pretty") (options "") (descr ""))
+)

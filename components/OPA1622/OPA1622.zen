@@ -1,0 +1,35 @@
+"""
+OPA1622 — dual bipolar-input SoundPlus audio op-amp, VSON-10 + EP.
+Datasheet: TI OPA1622 (local `pcb scan` conversion, not committed). ±2…±18V, +145/−130mA output,
+2.8nV/√Hz, THD+N −132dB. Ideal balanced headphone driver.
+
+Pin NAMES are blanked in the local symbol → mapped by NUMBER (the KiCad symbol
+reuses '+'/'−' across both units, which is ambiguous for name-keying):
+  1 INA+ · 10 INA− · 9 OUTA   |   5 INB+ · 6 INB− · 7 OUTB
+  2 V+ · 4 & 11(EP) V− · 3 GND · 8 EN (logic high = enable)
+"""
+
+INA_P = io(Net)   # 1
+INA_N = io(Net)   # 10
+OUTA  = io(Net)   # 9
+INB_P = io(Net)   # 5
+INB_N = io(Net)   # 6
+OUTB  = io(Net)   # 7
+VCC   = io(Net)   # 2
+VEE   = io(Net)   # 4, 11 (EP)
+GND   = io(Net)   # 3
+EN    = io(Net)   # 8
+
+Component(
+    name="OPA1622",
+    part=builtin.Part(mpn="OPA1622IDRCR", manufacturer="Texas Instruments"),
+    symbol=Symbol(library="OPA1622.kicad_sym", name="OPA1622"),
+    footprint=File("OPA1622.kicad_mod"),
+    prefix="U",
+    pins={
+        "1": INA_P, "10": INA_N, "9": OUTA,
+        "5": INB_P, "6": INB_N, "7": OUTB,
+        "2": VCC, "4": VEE, "11": VEE, "3": GND, "8": EN,
+    },
+    type="ic",
+)

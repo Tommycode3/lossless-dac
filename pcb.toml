@@ -1,0 +1,17 @@
+[workspace]
+repository = "github.com/Tommycode3/lossless-dac"
+pcb-version = "0.4"
+vendor = ["github.com/diodeinc/registry/**"]
+
+[board]
+name = "lossless-dac"
+path = "lossless-dac.zen"
+description = "Balanced headphone amplifier: LT3045/LT3094 ±5 V ultralow-noise rails + 2× OPA1622, for an ES9038Q2M DAC module."
+
+[dependencies]
+"github.com/Tommycode3/lossless-dac/components/LT3045" = "0.1.0"
+"github.com/Tommycode3/lossless-dac/components/LT3094" = "0.1.0"
+"github.com/Tommycode3/lossless-dac/components/OPA1622" = "0.1.0"
+
+[access]
+allow = ["*"]

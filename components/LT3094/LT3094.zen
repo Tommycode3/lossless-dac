@@ -1,0 +1,44 @@
+"""
+LT3094 — 500mA ultralow-noise (0.8µVRMS) NEGATIVE LDO, DFN-12 3×3 + EP.
+Datasheet: analog.com LT3094 (local `pcb scan` conversion, not committed). Pinout verified vs
+KiCad symbol LT3094xDD (extends LT3093xMSE). EXPOSED PAD (pin 13) = IN.
+
+  Vout   = -(100µA × R_SET)         (SET→GND; -5V → 49.9k)
+  I_LIM  = 3.75A·kΩ / R_ILIM        (7.5k → 500mA; tie ILIM→GND to disable)
+  EN/UV  → tie to IN (enable); do not float
+  PGFB   → tie to OUT if PG/fast-start unused
+  VIOC   → float if the input-tracking feature is unused
+  OUTS   → tie to OUT at the load; C_out ≥ 10µF ceramic
+"""
+
+IN    = io(Net)   # pins 1,2,13(EP) — negative input
+EN_UV = io(Net)   # pin 3
+PG    = io(Net)   # pin 4  (open-collector; float if unused)
+PGFB  = io(Net)   # pin 5
+ILIM  = io(Net)   # pin 6
+VIOC  = io(Net)   # pin 7  (float if unused)
+SET   = io(Net)   # pin 8
+GND   = io(Net)   # pin 9
+OUTS  = io(Net)   # pin 10 — output sense
+OUT   = io(Net)   # pins 11,12 — negative output
+
+Component(
+    name="LT3094",
+    part=builtin.Part(mpn="LT3094EDD#PBF", manufacturer="Analog Devices Inc."),
+    symbol=Symbol(library="LT3094.kicad_sym", name="LT3094xDD"),
+    footprint=File("LT3094.kicad_mod"),
+    prefix="U",
+    pins={
+        "IN": IN,
+        "EN/UV": EN_UV,
+        "PG": PG,
+        "PGFB": PGFB,
+        "ILIM": ILIM,
+        "VIOC": VIOC,
+        "SET": SET,
+        "GND": GND,
+        "OUTS": OUTS,
+        "OUT": OUT,
+    },
+    type="ic",
+)

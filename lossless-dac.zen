@@ -1,0 +1,119 @@
+"""
+LosslessDAC — top-tier balanced USB DAC + headphone amp (Tommaso's first solo PCB).
+
+Hybrid: bought Amanero (USB→I2S) + ES9038Q2M (DAC) modules; this custom board is
+the ultralow-noise power + balanced OPA1622 amp + 4.4mm balanced / 6.35mm SE out.
+
+v0.1 — power section + amplifier:
+  LT3045 / LT3094 ultralow-noise ±5 V analog rails from a ±9 V input,
+  one OPA1622 per channel (buffer + inverter) for a balanced output.
+  Module, power and jack connections are 2.54 mm pin headers for now.
+"""
+
+Resistor  = Module("@stdlib/generics/Resistor.zen")
+Capacitor = Module("@stdlib/generics/Capacitor.zen")
+PinHeader = Module("@stdlib/generics/PinHeader.zen")
+LT3045    = Module("components/LT3045/LT3045.zen")
+LT3094    = Module("components/LT3094/LT3094.zen")
+OPA1622   = Module("components/OPA1622/OPA1622.zen")
+
+GND    = Net("GND")
+VIN_P  = Net("VIN_P")    # positive pre-rail (~+7 V) feeding the +LDO
+VIN_N  = Net("VIN_N")    # negative pre-rail (~−7 V) feeding the −LDO
+VA_POS = Net("VA_POS")   # clean +5.0 V analog rail
+VA_NEG = Net("VA_NEG")   # clean −5.0 V analog rail
+_setp  = Net("SET_P")
+_ilimp = Net("ILIM_P")
+_pgfbp = Net("PGFB_P")
+_pgp   = Net("PG_POS")
+_setn  = Net("SET_N")
+_ilimn = Net("ILIM_N")
+_viocn = Net("VIOC_N")
+_pgn   = Net("PG_NEG")
+
+# ── +5.0 V ultralow-noise analog rail ───────────────────────────────────────
+LT3045(
+    name="U_LDO_POS",
+    IN=VIN_P, EN_UV=VIN_P, GND=GND,
+    OUT=VA_POS, OUTS=VA_POS,          # OUTS Kelvin-sensed at the load
+    SET=_setp, ILIM=_ilimp, PGFB=_pgfbp, PG=_pgp,
+)
+Resistor(name="R_SET_P",  value="49.9kohm", package="0402", P1=_setp,  P2=GND)   # 100µA × 49.9k = 4.99 V
+Capacitor(name="C_SET_P", value="4.7uF",    package="0805", P1=_setp,  P2=GND)   # reference filter → 0.8µVRMS
+Resistor(name="R_ILIM_P", value="300ohm",   package="0402", P1=_ilimp, P2=GND)   # 150mA·kΩ / 300Ω = 500 mA limit
+Capacitor(name="C_IN_P",  value="10uF",     package="0805", P1=VIN_P,  P2=GND)
+Capacitor(name="C_OUT_P", value="10uF",     package="0805", P1=VA_POS, P2=GND)   # min 10µF ceramic for stability
+
+# Power-good: divider so PGFB (300 mV trip) asserts PG at ≈ 4.9 V
+Resistor(name="R_PG1_P",  value="93.1kohm", package="0402", P1=VA_POS, P2=_pgfbp)
+Resistor(name="R_PG2_P",  value="6.04kohm", package="0402", P1=_pgfbp, P2=GND)
+Resistor(name="R_PGU_P",  value="100kohm",  package="0402", P1=_pgp,   P2=VA_POS)  # open-drain pull-up
+
+# ── −5.0 V ultralow-noise analog rail ───────────────────────────────────────
+LT3094(
+    name="U_LDO_NEG",
+    IN=VIN_N, EN_UV=VIN_N, GND=GND,   # EN/UV→IN (enable); do not float
+    OUT=VA_NEG, OUTS=VA_NEG,          # OUTS Kelvin-sensed at the load
+    SET=_setn, ILIM=_ilimn, VIOC=_viocn,
+    PGFB=VA_NEG, PG=_pgn,             # PGFB→OUT (PG/fast-start unused); PG floats
+)
+Resistor(name="R_SET_N",  value="49.9kohm", package="0402", P1=_setn,  P2=GND)   # -(100µA × 49.9k) = -4.99 V
+Capacitor(name="C_SET_N", value="4.7uF",    package="0805", P1=_setn,  P2=GND)   # reference filter → 0.8µVRMS
+Resistor(name="R_ILIM_N", value="7.5kohm",  package="0402", P1=_ilimn, P2=GND)   # 3.75A·kΩ / 7.5k = 500 mA limit
+Capacitor(name="C_IN_N",  value="10uF",     package="0805", P1=VIN_N,  P2=GND)
+Capacitor(name="C_OUT_N", value="10uF",     package="0805", P1=VA_NEG, P2=GND)   # min 10µF ceramic for stability
+
+# ── DC input: ±9 V dual rail feeds the LDOs (clean, no on-board switcher) ─────
+PinHeader(name="J_PWR", pins=3, pitch="2.54mm", P1=VIN_P, P2=GND, P3=VIN_N)  # +9 / GND / −9
+
+# ── Analog input from the ES9038Q2M module (single-ended L / R) ──────────────
+DAC_L = Net("DAC_L")
+DAC_R = Net("DAC_R")
+PinHeader(name="J_DAC", pins=3, pitch="2.54mm", P1=DAC_L, P2=GND, P3=DAC_R)
+
+# ── Balanced headphone amp — OPA1622 per channel (unit A = +, unit B = −) ────
+# Differential drive = 2× the buffered input. Powered from the clean ±5 V rails.
+L_POS = Net("L_POS"); L_NEG = Net("L_NEG")
+R_POS = Net("R_POS"); R_NEG = Net("R_NEG")
+_linb = Net("L_INBUF"); _linv = Net("L_INV")
+_rinb = Net("R_INBUF"); _rinv = Net("R_INV")
+
+# Left channel
+OPA1622(
+    name="U_AMP_L",
+    VCC=VA_POS, VEE=VA_NEG, GND=GND, EN=VA_POS,   # EN high = enabled
+    INA_P=_linb, INA_N=L_POS, OUTA=L_POS,          # unit A: unity buffer → L+
+    INB_P=GND,   INB_N=_linv, OUTB=L_NEG,          # unit B: inverter (−1) → L−
+)
+Capacitor(name="C_ACL",  value="2.2uF",   package="0805", P1=DAC_L, P2=_linb)   # input DC block
+Resistor(name="R_BIASL", value="100kohm", package="0402", P1=_linb, P2=GND)     # bias +in at 0 V
+Resistor(name="R_GL",    value="1kohm",   package="0402", P1=L_POS, P2=_linv)   # inverter Rg
+Resistor(name="R_FL",    value="1kohm",   package="0402", P1=L_NEG, P2=_linv)   # inverter Rf (−1)
+Capacitor(name="C_VPL",  value="100nF",   package="0402", P1=VA_POS, P2=GND)
+Capacitor(name="C_VNL",  value="100nF",   package="0402", P1=VA_NEG, P2=GND)
+
+# Right channel (mirror)
+OPA1622(
+    name="U_AMP_R",
+    VCC=VA_POS, VEE=VA_NEG, GND=GND, EN=VA_POS,
+    INA_P=_rinb, INA_N=R_POS, OUTA=R_POS,
+    INB_P=GND,   INB_N=_rinv, OUTB=R_NEG,
+)
+Capacitor(name="C_ACR",  value="2.2uF",   package="0805", P1=DAC_R, P2=_rinb)
+Resistor(name="R_BIASR", value="100kohm", package="0402", P1=_rinb, P2=GND)
+Resistor(name="R_GR",    value="1kohm",   package="0402", P1=R_POS, P2=_rinv)
+Resistor(name="R_FR",    value="1kohm",   package="0402", P1=R_NEG, P2=_rinv)
+Capacitor(name="C_VPR",  value="100nF",   package="0402", P1=VA_POS, P2=GND)
+Capacitor(name="C_VNR",  value="100nF",   package="0402", P1=VA_NEG, P2=GND)
+
+# ── Outputs ──────────────────────────────────────────────────────────────────
+# 4.4 mm Pentaconn balanced: L+  R+  L−  R−  GND
+PinHeader(name="J_BAL", pins=5, pitch="2.54mm", P1=L_POS, P2=R_POS, P3=L_NEG, P4=R_NEG, P5=GND)
+# 6.35 mm TRS single-ended: tip=L+  ring=R+  sleeve=GND
+PinHeader(name="J_SE", pins=3, pitch="2.54mm", P1=L_POS, P2=R_POS, P3=GND)
+
+Board(
+    name="lossless-dac",
+    layout_path="layout",
+    layers=4,
+)

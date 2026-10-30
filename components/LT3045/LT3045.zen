@@ -1,0 +1,40 @@
+"""
+LT3045 — 500mA ultralow-noise (0.8µVRMS) positive LDO, DFN-10 3×3 + EP.
+Datasheet: analog.com 3045fa (local `pcb scan` conversion, not committed). Verified pinout vs
+KiCad symbol Regulator_Linear:LT3045xDD.
+
+  Vout   = 100µA × R_SET           (SET pin sinks precise 100µA)
+  I_LIM  = 150mA·kΩ / R_ILIM        (300Ω → 500mA; tie ILIM→GND to disable)
+  C_out  ≥ 10µF ceramic (stability); C_SET large → lowest noise
+  EN/UV threshold 1.24V; PGFB trip 300mV
+"""
+
+IN    = io(Net)   # pins 1,2  — input
+EN_UV = io(Net)   # pin 3     — enable / undervoltage
+PG    = io(Net)   # pin 4     — power good (open-drain)
+ILIM  = io(Net)   # pin 5     — current-limit program (R→GND)
+PGFB  = io(Net)   # pin 6     — power-good feedback
+SET   = io(Net)   # pin 7     — output-voltage set (R_SET→GND)
+GND   = io(Net)   # pins 8,11(EP)
+OUTS  = io(Net)   # pin 9     — output sense (Kelvin to load)
+OUT   = io(Net)   # pin 10    — output
+
+Component(
+    name="LT3045",
+    part=builtin.Part(mpn="LT3045EDD#PBF", manufacturer="Analog Devices Inc."),
+    symbol=Symbol(library="LT3045.kicad_sym", name="LT3045xDD"),
+    footprint=File("LT3045.kicad_mod"),
+    prefix="U",
+    pins={
+        "IN": IN,
+        "EN/UV": EN_UV,
+        "PG": PG,
+        "ILIM": ILIM,
+        "PGFB": PGFB,
+        "SET": SET,
+        "GND": GND,
+        "OUTS": OUTS,
+        "OUT": OUT,
+    },
+    type="ic",
+)
